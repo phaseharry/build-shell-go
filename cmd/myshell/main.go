@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	exit = "exit"
+	EXIT = "exit"
+	ECHO = "echo"
 )
 
 func main() {
@@ -31,9 +32,17 @@ func main() {
 
 		command := delimitedInput[0]
 		// fmt.Printf("command: %v\n", command)
-		if command == exit {
+		if command == EXIT {
 			break
+		} else if command == ECHO {
+			echo(delimitedInput)
+		} else {
+			fmt.Printf("%v: command not found\n", input)
 		}
-		fmt.Printf("%v: command not found\n", input)
 	}
+}
+
+func echo(delimitedInput []string) {
+	toEcho := strings.Join(delimitedInput[1:], " ")
+	fmt.Printf("%v\n", toEcho)
 }
