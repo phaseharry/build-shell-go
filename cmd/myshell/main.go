@@ -66,7 +66,7 @@ func main() {
 			cmd := exec.Command(command, commandParams...)
 			stdout, err := cmd.Output()
 			if err == nil {
-				fmt.Printf("%v\n", string(stdout))
+				fmt.Print(string(stdout))
 				continue
 			}
 			fmt.Printf("%v\n", err.Error())
