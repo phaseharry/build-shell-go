@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -18,7 +19,10 @@ const (
 
 var BUILTIN = []string{EXIT, ECHO, TYPE}
 
+var paths = strings.Split(os.Getenv("PATH"), ":")
+
 func main() {
+
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
 
@@ -42,11 +46,33 @@ func main() {
 			break
 		} else if command == ECHO {
 			echoHandler(commandParams)
+			continue
 		} else if command == TYPE {
 			typeHandler((commandParams))
-		} else {
-			fmt.Printf("%v: command not found\n", input)
+			continue
 		}
+
+		pathCommandFound := false
+		for _, path := range paths {
+			fp := filepath.Join(path, command)
+			_, err := os.Stat(fp)
+			if err == nil {
+				pathCommandFound = true
+				break
+			}
+		}
+
+		if pathCommandFound {
+			cmd := exec.Command(command, commandParams...)
+			stdout, err := cmd.Output()
+			if err == nil {
+				fmt.Printf("%v\n", string(stdout))
+				continue
+			}
+			fmt.Printf("%v\n", err.Error())
+		}
+
+		fmt.Printf("%v: command not found\n", input)
 	}
 }
 
@@ -62,7 +88,6 @@ func typeHandler(commandParams []string) {
 		return
 	}
 
-	paths := strings.Split(os.Getenv("PATH"), ":")
 	for _, path := range paths {
 		fp := filepath.Join(path, command)
 		_, err := os.Stat(fp)
