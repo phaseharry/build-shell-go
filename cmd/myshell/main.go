@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 )
 
 const (
 	EXIT = "exit"
 	ECHO = "echo"
+	TYPE = "type"
 )
+
+var BUILTIN = []string{EXIT, ECHO, TYPE}
 
 func main() {
 	for {
@@ -31,18 +35,30 @@ func main() {
 		// fmt.Printf("%v\n", delimitedInput)
 
 		command := delimitedInput[0]
+		commandParams := delimitedInput[1:]
 		// fmt.Printf("command: %v\n", command)
 		if command == EXIT {
 			break
 		} else if command == ECHO {
-			echo(delimitedInput)
+			echoHandler(commandParams)
+		} else if command == TYPE {
+			typeHandler((commandParams))
 		} else {
 			fmt.Printf("%v: command not found\n", input)
 		}
 	}
 }
 
-func echo(delimitedInput []string) {
-	toEcho := strings.Join(delimitedInput[1:], " ")
+func echoHandler(commandParams []string) {
+	toEcho := strings.Join(commandParams, " ")
 	fmt.Printf("%v\n", toEcho)
+}
+
+func typeHandler(commandParams []string) {
+	command := strings.Join(commandParams, " ")
+	if slices.Contains(BUILTIN, command) {
+		fmt.Printf("%v is a shell builtin\n", command)
+		return
+	}
+	fmt.Printf("%v: not found\n", command)
 }
