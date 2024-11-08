@@ -69,7 +69,7 @@ func typeHandler(commandParams []string) {
 		// if we're able to find the command from any of our paths then print and then return
 		// since the command exists
 		if err == nil {
-			fmt.Printf("%v is %v\n", command, path)
+			fmt.Printf("%v is %v\n", command, fp)
 			return
 		}
 	}
