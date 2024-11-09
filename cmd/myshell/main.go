@@ -24,8 +24,6 @@ var BUILTIN = []string{EXIT, ECHO, TYPE, PWD, CD}
 var paths = strings.Split(os.Getenv("PATH"), ":")
 
 func main() {
-	currentPath, _ := os.Getwd()
-
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
 
@@ -54,10 +52,10 @@ func main() {
 			typeHandler(commandParams)
 			continue
 		} else if command == PWD {
-			pwdHandler(currentPath)
+			pwdHandler()
 			continue
 		} else if command == CD {
-			cdHandler(&currentPath, strings.Join(commandParams, ""))
+			cdHandler(strings.Join(commandParams, ""))
 			continue
 		}
 
@@ -110,19 +108,25 @@ func typeHandler(commandParams []string) {
 	fmt.Printf("%v: not found\n", command)
 }
 
-func pwdHandler(currentPath string) {
-	fmt.Printf("%v\n", currentPath)
+func pwdHandler() {
+	dir, _ := os.Getwd()
+	fmt.Printf("%v\n", dir)
 }
 
-func cdHandler(currentPath *string, pathNavigation string) {
+func cdHandler(pathNavigation string) {
 	elements := strings.Split(pathNavigation, "/")
-	if len(elements) == 0 { // no elements just "cd" so go back to root path
-		*currentPath = "/"
+	directoryPath := ""
+	if len(elements) == 0 { // no elements just "cd" so go back to
+		return
 	} else if elements[0] == "." {
 		return
 	} else if elements[0] == ".." {
 		return
 	} else { // absolute path, so just overwrite
-		*currentPath = pathNavigation
+		directoryPath = pathNavigation
+	}
+
+	if err := os.Chdir(directoryPath); err != nil {
+		fmt.Printf("cd: %v: No such file or directory\n", directoryPath)
 	}
 }
