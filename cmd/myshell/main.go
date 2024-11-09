@@ -15,6 +15,7 @@ const (
 	EXIT = "exit"
 	ECHO = "echo"
 	TYPE = "type"
+	PWD  = "pwd"
 )
 
 var BUILTIN = []string{EXIT, ECHO, TYPE}
@@ -49,6 +50,9 @@ func main() {
 			continue
 		} else if command == TYPE {
 			typeHandler((commandParams))
+			continue
+		} else if command == PWD {
+			pwdHandler()
 			continue
 		}
 
@@ -99,4 +103,9 @@ func typeHandler(commandParams []string) {
 		}
 	}
 	fmt.Printf("%v: not found\n", command)
+}
+
+func pwdHandler() {
+	dir, _ := os.Getwd()
+	fmt.Printf("%v\n", dir)
 }
