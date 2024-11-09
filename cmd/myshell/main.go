@@ -17,11 +17,13 @@ const (
 	TYPE = "type"
 	PWD  = "pwd"
 	CD   = "cd"
+	HOME = '~'
 )
 
 var BUILTIN = []string{EXIT, ECHO, TYPE, PWD, CD}
 
-var paths = strings.Split(os.Getenv("PATH"), ":")
+var PATHS = strings.Split(os.Getenv("PATH"), ":")
+var HOME_DIRECTORY = os.Getenv("HOME")
 
 func main() {
 	for {
@@ -60,7 +62,7 @@ func main() {
 		}
 
 		pathCommandFound := false
-		for _, path := range paths {
+		for _, path := range PATHS {
 			fp := filepath.Join(path, command)
 			_, err := os.Stat(fp)
 			if err == nil {
@@ -95,7 +97,7 @@ func typeHandler(commandParams []string) {
 		return
 	}
 
-	for _, path := range paths {
+	for _, path := range PATHS {
 		fp := filepath.Join(path, command)
 		_, err := os.Stat(fp)
 		// if we're able to find the command from any of our paths then print and then return
@@ -117,7 +119,9 @@ func cdHandler(targetPath string) {
 	directoryPath := ""
 	dir, _ := os.Getwd()
 
-	if targetPath[0] == '/' { // absolute path, so just overwrite
+	if targetPath[0] == HOME {
+		directoryPath = HOME_DIRECTORY
+	} else if targetPath[0] == '/' { // absolute path, so just overwrite
 		directoryPath = targetPath
 	} else { // relative path so will use current working dir to generate next path
 		directoryPath = filepath.Join(dir, targetPath)
