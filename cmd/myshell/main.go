@@ -18,7 +18,7 @@ const (
 	PWD  = "pwd"
 )
 
-var BUILTIN = []string{EXIT, ECHO, TYPE}
+var BUILTIN = []string{EXIT, ECHO, TYPE, PWD}
 
 var paths = strings.Split(os.Getenv("PATH"), ":")
 
