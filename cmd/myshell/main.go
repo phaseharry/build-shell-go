@@ -16,13 +16,15 @@ const (
 	ECHO = "echo"
 	TYPE = "type"
 	PWD  = "pwd"
+	CD   = "cd"
 )
 
-var BUILTIN = []string{EXIT, ECHO, TYPE, PWD}
+var BUILTIN = []string{EXIT, ECHO, TYPE, PWD, CD}
 
 var paths = strings.Split(os.Getenv("PATH"), ":")
 
 func main() {
+	currentPath, _ := os.Getwd()
 
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
@@ -49,10 +51,13 @@ func main() {
 			echoHandler(commandParams)
 			continue
 		} else if command == TYPE {
-			typeHandler((commandParams))
+			typeHandler(commandParams)
 			continue
 		} else if command == PWD {
-			pwdHandler()
+			pwdHandler(currentPath)
+			continue
+		} else if command == CD {
+			cdHandler(&currentPath, strings.Join(commandParams, ""))
 			continue
 		}
 
@@ -105,7 +110,19 @@ func typeHandler(commandParams []string) {
 	fmt.Printf("%v: not found\n", command)
 }
 
-func pwdHandler() {
-	dir, _ := os.Getwd()
-	fmt.Printf("%v\n", dir)
+func pwdHandler(currentPath string) {
+	fmt.Printf("%v\n", currentPath)
+}
+
+func cdHandler(currentPath *string, pathNavigation string) {
+	elements := strings.Split(pathNavigation, "/")
+	if len(elements) == 0 { // no elements just "cd" so go back to root path
+		*currentPath = "/"
+	} else if elements[0] == "." {
+		return
+	} else if elements[0] == ".." {
+		return
+	} else { // absolute path, so just overwrite
+		*currentPath = pathNavigation
+	}
 }
