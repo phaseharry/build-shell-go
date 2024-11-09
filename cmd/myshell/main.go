@@ -113,17 +113,14 @@ func pwdHandler() {
 	fmt.Printf("%v\n", dir)
 }
 
-func cdHandler(pathNavigation string) {
-	elements := strings.Split(pathNavigation, "/")
+func cdHandler(targetPath string) {
 	directoryPath := ""
-	if len(elements) == 0 { // no elements just "cd" so go back to
-		return
-	} else if elements[0] == "." {
-		return
-	} else if elements[0] == ".." {
-		return
-	} else { // absolute path, so just overwrite
-		directoryPath = pathNavigation
+	dir, _ := os.Getwd()
+
+	if targetPath[0] == '/' { // absolute path, so just overwrite
+		directoryPath = targetPath
+	} else { // relative path so will use current working dir to generate next path
+		directoryPath = filepath.Join(dir, targetPath)
 	}
 
 	if err := os.Chdir(directoryPath); err != nil {
