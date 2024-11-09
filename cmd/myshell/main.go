@@ -21,7 +21,6 @@ const (
 )
 
 var BUILTIN = []string{EXIT, ECHO, TYPE, PWD, CD}
-
 var PATHS = strings.Split(os.Getenv("PATH"), ":")
 var HOME_DIRECTORY = os.Getenv("HOME")
 
@@ -119,8 +118,10 @@ func cdHandler(targetPath string) {
 	directoryPath := ""
 	dir, _ := os.Getwd()
 
-	if targetPath[0] == HOME {
+	if targetPath == "" || targetPath == string(HOME) {
 		directoryPath = HOME_DIRECTORY
+	} else if targetPath[0] == HOME { // using home directory as a base to change directory
+		directoryPath = filepath.Join(HOME_DIRECTORY, targetPath[1:])
 	} else if targetPath[0] == '/' { // absolute path, so just overwrite
 		directoryPath = targetPath
 	} else { // relative path so will use current working dir to generate next path
