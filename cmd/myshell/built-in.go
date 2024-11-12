@@ -73,15 +73,4 @@ func typeCommand(args string) {
 	} else {
 		fmt.Printf("%v: not found\n", command)
 	}
-
-	for _, path := range PATHS {
-		fp := filepath.Join(path, command)
-		_, err := os.Stat(fp)
-		// if we're able to find the command from any of our paths then print and then return
-		// since the command exists
-		if err == nil {
-			fmt.Printf("%v is %v\n", command, fp)
-			return
-		}
-	}
 }
