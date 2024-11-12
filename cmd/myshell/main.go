@@ -7,20 +7,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 )
 
 const (
-	EXIT = "exit"
-	ECHO = "echo"
-	TYPE = "type"
-	PWD  = "pwd"
-	CD   = "cd"
 	HOME = '~'
 )
 
-var BUILTIN = []string{EXIT, ECHO, TYPE, PWD, CD}
 var PATHS = strings.Split(os.Getenv("PATH"), ":")
 var HOME_DIRECTORY = os.Getenv("HOME")
 
@@ -36,99 +29,47 @@ func main() {
 
 		// remove the trailing "\n" when we read the user input in.
 		input = strings.Trim(input, "\n")
-		// fmt.Printf("input line: %v\n", input)
-
 		delimitedInput := strings.Split(input, " ")
-		// fmt.Printf("%v\n", delimitedInput)
-
 		command := delimitedInput[0]
-		commandParams := delimitedInput[1:]
-		// fmt.Printf("command: %v\n", command)
-		if command == EXIT {
-			break
-		} else if command == ECHO {
-			echoHandler(commandParams)
-			continue
-		} else if command == TYPE {
-			typeHandler(commandParams)
-			continue
-		} else if command == PWD {
-			pwdHandler()
-			continue
-		} else if command == CD {
-			cdHandler(strings.Join(commandParams, ""))
-			continue
-		}
+		commandParams := strings.Join(delimitedInput[1:], " ")
 
-		pathCommandFound := false
-		for _, path := range PATHS {
-			fp := filepath.Join(path, command)
-			_, err := os.Stat(fp)
-			if err == nil {
-				pathCommandFound = true
-				break
-			}
+		if handled := handleCommand(command, commandParams); !handled {
+			fmt.Printf("%v: command not found\n", input)
 		}
-
-		if pathCommandFound {
-			cmd := exec.Command(command, commandParams...)
-			stdout, err := cmd.Output()
-			if err == nil {
-				fmt.Print(string(stdout))
-				continue
-			}
-			fmt.Printf("%v\n", err.Error())
-		}
-
-		fmt.Printf("%v: command not found\n", input)
 	}
 }
 
-func echoHandler(commandParams []string) {
-	toEcho := strings.Join(commandParams, " ")
-	fmt.Printf("%v\n", toEcho)
+func handleCommand(command, args string) bool {
+	if _, ok := builtInHandlers[command]; ok {
+		builtInHandlers[command](args)
+		return true
+	} else if ok := handleExternalCommands(command, args); ok {
+		return true
+	}
+	return false
 }
 
-func typeHandler(commandParams []string) {
-	command := strings.Join(commandParams, " ")
-	if slices.Contains(BUILTIN, command) {
-		fmt.Printf("%v is a shell builtin\n", command)
-		return
+func handleExternalCommands(command, args string) bool {
+	_, pathCommandFound := fileInPathVariables(command)
+
+	if pathCommandFound {
+		cmd := exec.Command(command, args)
+		stdout, _ := cmd.Output()
+		fmt.Print(string(stdout))
+		return true
 	}
 
+	return false
+}
+
+func fileInPathVariables(command string) (string, bool) {
 	for _, path := range PATHS {
 		fp := filepath.Join(path, command)
 		_, err := os.Stat(fp)
-		// if we're able to find the command from any of our paths then print and then return
-		// since the command exists
+		// if we're able to find the command from any of our paths return the path
 		if err == nil {
-			fmt.Printf("%v is %v\n", command, fp)
-			return
+			return fp, true
 		}
 	}
-	fmt.Printf("%v: not found\n", command)
-}
-
-func pwdHandler() {
-	dir, _ := os.Getwd()
-	fmt.Printf("%v\n", dir)
-}
-
-func cdHandler(targetPath string) {
-	directoryPath := ""
-	dir, _ := os.Getwd()
-
-	if targetPath == "" || targetPath == string(HOME) {
-		directoryPath = HOME_DIRECTORY
-	} else if targetPath[0] == HOME { // using home directory as a base to change directory
-		directoryPath = filepath.Join(HOME_DIRECTORY, targetPath[1:])
-	} else if targetPath[0] == '/' { // absolute path, so just overwrite
-		directoryPath = targetPath
-	} else { // relative path so will use current working dir to generate next path
-		directoryPath = filepath.Join(dir, targetPath)
-	}
-
-	if err := os.Chdir(directoryPath); err != nil {
-		fmt.Printf("cd: %v: No such file or directory\n", directoryPath)
-	}
+	return "", false
 }
