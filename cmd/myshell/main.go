@@ -31,12 +31,24 @@ func main() {
 		input = strings.Trim(input, "\n")
 		delimitedInput := strings.Split(input, " ")
 		command := delimitedInput[0]
-		commandParams := strings.Join(delimitedInput[1:], " ")
+
+		var tokens []string
+		for i := 1; i < len(delimitedInput); i++ {
+			tokens = append(tokens, stripQuotesFromTokens(delimitedInput[i]))
+		}
+		commandParams := strings.Join(tokens, " ")
 
 		if handled := handleCommand(command, commandParams); !handled {
 			fmt.Printf("%v: command not found\n", input)
 		}
 	}
+}
+
+func stripQuotesFromTokens(token string) string {
+	// hack fix right now, just to remove all single quotes and double quotes
+	token = strings.Trim(token, "'")
+	token = strings.Trim(token, "\"")
+	return token
 }
 
 func handleCommand(command, args string) bool {
