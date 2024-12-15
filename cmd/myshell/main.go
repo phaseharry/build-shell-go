@@ -30,11 +30,19 @@ func main() {
 		// remove the trailing "\n" when we read the user input in.
 		input = strings.Trim(input, "\n")
 		delimitedInput := strings.Split(input, " ")
+		log.Printf("delimitedInput: %v", delimitedInput)
 		command := delimitedInput[0]
 
 		var tokens []string
 		for i := 1; i < len(delimitedInput); i++ {
-			tokens = append(tokens, stripQuotesFromTokens(delimitedInput[i]))
+			normalizedToken := normalizeTokens(delimitedInput[i])
+			/*
+				Only add token if it is not a empty so we don't add extra spaces when we join
+				the values together to format one string after we normalize by string quotes
+			*/
+			if len(normalizedToken) > 0 {
+				tokens = append(tokens, normalizedToken)
+			}
 		}
 		commandParams := strings.Join(tokens, " ")
 
@@ -44,7 +52,7 @@ func main() {
 	}
 }
 
-func stripQuotesFromTokens(token string) string {
+func normalizeTokens(token string) string {
 	// hack fix right now, just to remove all single quotes and double quotes
 	token = strings.Trim(token, "'")
 	token = strings.Trim(token, "\"")
