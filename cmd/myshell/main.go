@@ -30,7 +30,6 @@ func main() {
 		// remove the trailing "\n" when we read the user input in.
 		input = strings.Trim(input, "\n")
 		delimitedInput := strings.Split(input, " ")
-		log.Printf("delimitedInput: %v", delimitedInput)
 		command := delimitedInput[0]
 
 		var tokens []string
