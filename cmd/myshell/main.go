@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,38 +23,51 @@ func main() {
 		// Wait for user input
 		input, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
-			log.Panicf("error reading in user input: %v", err)
+			fmt.Fprintln(os.Stderr, err)
+			return
 		}
 
 		// remove the trailing "\n" when we read the user input in.
-		input = strings.Trim(input, "\n")
-		delimitedInput := strings.Split(input, " ")
-		command := delimitedInput[0]
+		input = strings.Trim(input, "\r\n")
+		// log.Printf("input: %v", input)
 
 		var tokens []string
-		for i := 1; i < len(delimitedInput); i++ {
-			normalizedToken := normalizeTokens(delimitedInput[i])
+		for {
 			/*
-				Only add token if it is not a empty so we don't add extra spaces when we join
-				the values together to format one string after we normalize by string quotes
+				get the first index of '. If it exists then it is the first single
+				quote and we need to find the closing single quote of it. We append
+				everything in between the two single quotes. We do this until we do not have any
+				single quotes left.
 			*/
-			if len(normalizedToken) > 0 {
-				tokens = append(tokens, normalizedToken)
+			startIdx := strings.Index(input, "'")
+			/*
+				if there is no single quotes then we can just append the rest of the input
+				to our tokens
+			*/
+			if startIdx == -1 {
+				tokens = append(tokens, strings.Split(input, " ")...)
+				break
 			}
+			tokens = append(tokens, strings.Split(input[:startIdx], " ")...)
+			// updating the existing input string to remove all tokens already appended to tokens slice
+			input = input[startIdx+1:]
+			/*
+				getting index of the ending single quote and append all tokens before it
+				to tokens
+			*/
+			endIdx := strings.Index(input, "'")
+			tokens = append(tokens, strings.Split(input[:endIdx], " ")...)
+
+			input = input[endIdx+1:]
 		}
+
+		command := tokens[0]
 		commandParams := strings.Join(tokens, " ")
 
 		if handled := handleCommand(command, commandParams); !handled {
 			fmt.Printf("%v: command not found\n", input)
 		}
 	}
-}
-
-func normalizeTokens(token string) string {
-	// hack fix right now, just to remove all single quotes and double quotes
-	token = strings.Trim(token, "'")
-	token = strings.Trim(token, "\"")
-	return token
 }
 
 func handleCommand(command, args string) bool {
