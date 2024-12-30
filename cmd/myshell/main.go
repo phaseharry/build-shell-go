@@ -44,12 +44,18 @@ func main() {
 				to our tokens
 			*/
 			if startIdx == -1 {
-				// using string.Fields to return a slice of strings with no spaces.
-				// the elements are delimited by spaces
+				/*
+					using string.Fields to return a slice of strings with no spaces.
+					the elements are delimited by spaces. This is only done for tokens before the first
+					single quote. Since we want to keep any spaces between 2 single quotes.
+					ex) echo 'test     example'. We don't want to filter out the spaces between the first
+					single quote and the last, but we do want to filter out spaces for
+					ex) echo    'test example'
+				*/
 				tokens = append(tokens, strings.Fields(input)...)
 				break
 			}
-			// appending every token before the first single quote
+			// appending every token before the first single quote, but stripping out the spaces before the first single quote
 			tokens = append(tokens, strings.Fields(input[:startIdx])...)
 			// updating the existing input string to remove all tokens already appended to tokens slice
 			input = input[startIdx+1:]
@@ -58,7 +64,8 @@ func main() {
 				to tokens
 			*/
 			endIdx := strings.Index(input, "'")
-			tokens = append(tokens, strings.Fields(input[:endIdx])...)
+			tokenBetweenStartIdxAndEndIdx := input[:endIdx] // getting all values include spaces between first single quote and end single quote
+			tokens = append(tokens, tokenBetweenStartIdxAndEndIdx)
 			input = input[endIdx+1:]
 		}
 
