@@ -29,7 +29,6 @@ func main() {
 
 		// remove the trailing "\n" when we read the user input in.
 		input = strings.Trim(input, "\r\n")
-		// log.Printf("input: %v", input)
 
 		var tokens []string
 		for {
@@ -45,10 +44,13 @@ func main() {
 				to our tokens
 			*/
 			if startIdx == -1 {
-				tokens = append(tokens, strings.Split(input, " ")...)
+				// using string.Fields to return a slice of strings with no spaces.
+				// the elements are delimited by spaces
+				tokens = append(tokens, strings.Fields(input)...)
 				break
 			}
-			tokens = append(tokens, strings.Split(input[:startIdx], " ")...)
+			// appending every token before the first single quote
+			tokens = append(tokens, strings.Fields(input[:startIdx])...)
 			// updating the existing input string to remove all tokens already appended to tokens slice
 			input = input[startIdx+1:]
 			/*
@@ -56,14 +58,12 @@ func main() {
 				to tokens
 			*/
 			endIdx := strings.Index(input, "'")
-			tokens = append(tokens, strings.Split(input[:endIdx], " ")...)
-
+			tokens = append(tokens, strings.Fields(input[:endIdx])...)
 			input = input[endIdx+1:]
 		}
 
 		command := tokens[0]
-		commandParams := strings.Join(tokens, " ")
-
+		commandParams := strings.Join(tokens[1:], " ")
 		if handled := handleCommand(command, commandParams); !handled {
 			fmt.Printf("%v: command not found\n", input)
 		}
