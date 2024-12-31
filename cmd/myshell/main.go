@@ -97,8 +97,14 @@ func handleExternalCommands(command string, args []string) bool {
 
 	if pathCommandFound {
 		cmd := exec.Command(command, args...)
-		stdout, _ := cmd.Output()
-		fmt.Printf("%v\n", string(stdout))
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("error executing command '%v'. err: %v", command, err)
+			return false
+		}
 		return true
 	}
 
