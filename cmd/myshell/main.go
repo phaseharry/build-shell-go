@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -70,14 +71,19 @@ func main() {
 		}
 
 		command := tokens[0]
-		commandParams := strings.Join(tokens[1:], " ")
+		commandParams := tokens[1:]
+		// log.Printf("command: %v", command)
+		// log.Printf("commandParams: %v", commandParams)
+		// for _, val := range commandParams {
+		// 	log.Println(val)
+		// }
 		if handled := handleCommand(command, commandParams); !handled {
 			fmt.Printf("%v: command not found\n", input)
 		}
 	}
 }
 
-func handleCommand(command, args string) bool {
+func handleCommand(command string, args []string) bool {
 	if _, ok := builtInHandlers[command]; ok {
 		builtInHandlers[command](args)
 		return true
@@ -87,13 +93,15 @@ func handleCommand(command, args string) bool {
 	return false
 }
 
-func handleExternalCommands(command, args string) bool {
+func handleExternalCommands(command string, args []string) bool {
 	_, pathCommandFound := fileInPathVariables(command)
 
+	log.Printf("external command: %v\n", command)
+	log.Printf("args: %v\n", args)
 	if pathCommandFound {
-		cmd := exec.Command(command, args)
+		cmd := exec.Command(command, args...)
 		stdout, _ := cmd.Output()
-		fmt.Print(string(stdout))
+		fmt.Printf("%v\n", string(stdout))
 		return true
 	}
 
