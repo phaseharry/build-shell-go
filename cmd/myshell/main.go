@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -96,8 +95,6 @@ func handleCommand(command string, args []string) bool {
 func handleExternalCommands(command string, args []string) bool {
 	_, pathCommandFound := fileInPathVariables(command)
 
-	log.Printf("external command: %v\n", command)
-	log.Printf("args: %v\n", args)
 	if pathCommandFound {
 		cmd := exec.Command(command, args...)
 		stdout, _ := cmd.Output()
