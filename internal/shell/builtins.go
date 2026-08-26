@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -11,6 +12,7 @@ func (s *Shell) builtRegistry() map[string]builtin {
 		"exit": s.exit,
 		"echo": s.echo,
 		"type": s.typeCommand,
+		"pwd":  s.pwd,
 	}
 }
 
@@ -46,6 +48,22 @@ func (s *Shell) typeCommand(args []string) Result {
 			fmt.Fprintf(s.out, "%s is %s\n", command, path)
 		}
 	}
+
+	return Result{
+		Exit:   false,
+		Status: 0,
+	}
+}
+
+func (s *Shell) pwd(_args []string) Result {
+	directory, err := os.Getwd()
+	if err != nil {
+		return Result{
+			Exit:   false,
+			Status: 1,
+		}
+	}
+	fmt.Fprintln(s.out, directory)
 
 	return Result{
 		Exit: false,
