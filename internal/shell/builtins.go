@@ -32,24 +32,23 @@ func (s *Shell) echo(args []string) Result {
 
 // using typeCommand instead of type since type is a keyword
 func (s *Shell) typeCommand(args []string) Result {
-	result := Result{}
-	if len(args) == 0 {
-		fmt.Println("type is missing arguments")
-		return result
-	}
-	command := args[0]
-	_, ok := s.builtins[command]
-	if ok {
-		fmt.Fprintf(s.out, "%s is a shell builtin\n", command)
-		return result
+	for _, command := range args {
+		_, ok := s.builtins[command]
+		if ok {
+			fmt.Fprintf(s.out, "%s is a shell builtin\n", command)
+			continue
+		}
+		// TODO, implement PATH lookup instead of using exec.LookPath
+		path, err := exec.LookPath(command)
+		if err != nil {
+			fmt.Fprintf(s.out, "%s: not found\n", command)
+		} else {
+			fmt.Fprintf(s.out, "%s is %s\n", command, path)
+		}
 	}
 
-	// TODO, implement PATH lookup instead of using exec.LookPath
-	path, err := exec.LookPath(command)
-	if err != nil {
-		fmt.Fprintf(s.out, "%s: not found\n", command)
-	} else {
-		fmt.Fprintf(s.out, "%s is %s\n", command, path)
+	return Result{
+		Exit: false,
+		Status: 0,
 	}
-	return result
 }

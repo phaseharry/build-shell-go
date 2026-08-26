@@ -6,22 +6,52 @@ import (
 )
 
 func ParseLine(line string) Command {
-	line = strings.TrimSpace(line)
+	tokens := tokenize(line)
 
-	// get the index of the first space delimiter. all the characters leading up to that first space will be the command
-	// the result will be the arguments for that command
-	commandDelimiter := strings.IndexFunc(line, unicode.IsSpace)
+	if len(tokens) == 0 {
+		return Command{}
+	}
 
-	// the line was either empty and has no command or
-	// it was a command only with no arguments
-	if commandDelimiter < 0 {
-		return Command{
-			Name: line,
-		}
+	commandName := tokens[0]
+	var args []string
+
+	if len(tokens) > 1 {
+		args = tokens[1:]
 	}
 
 	return Command{
-		Name: line[:commandDelimiter],
-		Args: strings.TrimSpace(line[commandDelimiter+1:]),
+		Name: commandName,
+		Args: args,
 	}
+}
+
+func tokenize(line string) []string {
+	var tokens []string
+	var current strings.Builder
+	hasToken := false
+
+	flush := func() {
+		// everytime flush is called, convert the current string builder to a string and reset it to build the next token.
+		// flush is called everytime we encounter a <space> or if we are at the end of the line and we need to create the
+		// very last string
+		if hasToken {
+			tokens = append(tokens, current.String())
+			current.Reset()
+			hasToken = false
+		}
+	}
+
+	for _, r := range line {
+		if unicode.IsSpace(r) {
+			flush()
+			continue
+		}
+		current.WriteRune(r)
+		hasToken = true
+	}
+
+	// flush one final time to capture the last token if there is one and not <space><space><space>
+	// at the end of the line
+	flush()
+	return tokens
 }

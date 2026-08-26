@@ -8,7 +8,9 @@ import (
 
 func (s *Shell) Run() int {
 	for {
-		fmt.Fprint(s.out, "$ ")
+		if _, err := fmt.Fprint(s.out, "$ "); err != nil {
+			return 1
+		}
 
 		line, err := s.reader.ReadString('\n')
 		if err != nil {
@@ -17,20 +19,12 @@ func (s *Shell) Run() int {
 		}
 
 		command := parser.ParseLine(line)
-
 		// handle empty line by just keeping the repl going
 		if command.Name == "" {
 			continue
 		}
 
-		fnc, ok := s.builtins[command.Name]
-		if !ok {
-			fmt.Fprintf(s.out, "%s: command not found\n", command.Name)
-			continue
-		}
-
-		result := fnc([]string{command.Args})
-		if result.Exit {
+		if result := s.execute(command); result.Exit {
 			return result.Status
 		}
 	}
