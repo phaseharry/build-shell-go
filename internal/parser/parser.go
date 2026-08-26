@@ -22,6 +22,6 @@ func ParseLine(line string) Command {
 
 	return Command{
 		Name: line[:commandDelimiter],
-		Args: line[commandDelimiter+1:],
+		Args: strings.TrimSpace(line[commandDelimiter+1:]),
 	}
 }

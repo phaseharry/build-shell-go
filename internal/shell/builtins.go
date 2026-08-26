@@ -9,6 +9,7 @@ func (s *Shell) builtRegistry() map[string]builtin {
 	return map[string]builtin{
 		"exit": s.exit,
 		"echo": s.echo,
+		"type": s.typeCommand,
 	}
 }
 
@@ -26,4 +27,21 @@ func (s *Shell) echo(args []string) Result {
 		Exit:   false,
 		Status: 0,
 	}
+}
+
+// using typeCommand instead of type since type is a keyword
+func (s *Shell) typeCommand(args []string) Result {
+	result := Result{}
+	if len(args) == 0 {
+		fmt.Println("type is missing arguments")
+		return result
+	}
+	command := args[0]
+	_, ok := s.builtins[command]
+	if ok {
+		fmt.Fprintf(s.out, "%s is a shell builtin\n", command)
+	} else {
+		fmt.Fprintf(s.out, "%s: not found\n", command)
+	}
+	return result
 }
