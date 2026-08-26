@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 )
 
@@ -40,8 +41,15 @@ func (s *Shell) typeCommand(args []string) Result {
 	_, ok := s.builtins[command]
 	if ok {
 		fmt.Fprintf(s.out, "%s is a shell builtin\n", command)
-	} else {
+		return result
+	}
+
+	// TODO, implement PATH lookup instead of using exec.LookPath
+	path, err := exec.LookPath(command)
+	if err != nil {
 		fmt.Fprintf(s.out, "%s: not found\n", command)
+	} else {
+		fmt.Fprintf(s.out, "%s is %s\n", command, path)
 	}
 	return result
 }
