@@ -13,6 +13,7 @@ func (s *Shell) builtRegistry() map[string]builtin {
 		"echo": s.echo,
 		"type": s.typeCommand,
 		"pwd":  s.pwd,
+		"cd":   s.cd,
 	}
 }
 
@@ -55,7 +56,7 @@ func (s *Shell) typeCommand(args []string) Result {
 	}
 }
 
-func (s *Shell) pwd(_args []string) Result {
+func (s *Shell) pwd(args []string) Result {
 	directory, err := os.Getwd()
 	if err != nil {
 		return Result{
@@ -66,7 +67,33 @@ func (s *Shell) pwd(_args []string) Result {
 	fmt.Fprintln(s.out, directory)
 
 	return Result{
-		Exit: false,
+		Exit:   false,
 		Status: 0,
 	}
+}
+
+func (s *Shell) cd(args []string) Result {
+	// if there is no arguments then set it to HOME directory
+	if len(args) == 0 {
+		if err := os.Chdir("~"); err != nil {
+			return Result{
+				Exit:   false,
+				Status: 1,
+			}
+		}
+		return Result{
+			Exit:   false,
+			Status: 0,
+		}
+	}
+	path := args[0]
+	if err := os.Chdir(path); err != nil {
+		fmt.Fprintf(s.errOut, "cd: %s: No such file or directory\n", path)
+		return Result{
+			Exit:   false,
+			Status: 1,
+		}
+	}
+
+	return Result{}
 }
