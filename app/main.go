@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"os"
+
+	"github.com/codecrafters-io/shell-starter-go/internal/shell"
 )
 
 func main() {
-fmt.Print("$ ")
+	sh := shell.New(os.Stdin, os.Stdout, os.Stderr)
+	sh.Run()
 }
