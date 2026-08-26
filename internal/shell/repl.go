@@ -2,7 +2,8 @@ package shell
 
 import (
 	"fmt"
-	"strings"
+
+	"github.com/codecrafters-io/shell-starter-go/internal/parser"
 )
 
 func (s *Shell) Run() int {
@@ -15,22 +16,20 @@ func (s *Shell) Run() int {
 			return 1
 		}
 
-		// using string.Fields to split all strings by whitespace, removing them all
+		command := parser.ParseLine(line)
 
-		tokens := strings.Fields(line)
-		// handle an empty line by just keeping the repl going
-		if len(tokens) == 0 {
+		// handle empty line by just keeping the repl going
+		if command.Name == "" {
 			continue
 		}
-		command, args := tokens[0], tokens[1:]
 
-		fnc, ok := s.builtins[command]
+		fnc, ok := s.builtins[command.Name]
 		if !ok {
-			fmt.Fprintf(s.out, "%s: command not found\n", command)
+			fmt.Fprintf(s.out, "%s: command not found\n", command.Name)
 			continue
 		}
 
-		result := fnc(args)
+		result := fnc([]string{command.Args})
 		if result.Exit {
 			return result.Status
 		}
