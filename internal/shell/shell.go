@@ -27,5 +27,6 @@ func New(in io.Reader, out io.Writer, errOut io.Writer) *Shell {
 		errOut: errOut,
 		reader: bufio.NewReader(in),
 	}
+	sh.builtins = sh.builtRegistry()
 	return sh
 }

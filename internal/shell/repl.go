@@ -15,12 +15,24 @@ func (s *Shell) Run() int {
 			return 1
 		}
 
-		// removing the \n delimiter from the actual command so it doesn't mess up std output
-		command := strings.Trim(line, "\n")
+		// using string.Fields to split all strings by whitespace, removing them all
 
-		_, ok := s.builtins[command]
+		tokens := strings.Fields(line)
+		// handle an empty line by just keeping the repl going
+		if len(tokens) == 0 {
+			continue
+		}
+		command, args := tokens[0], tokens[1:]
+
+		fnc, ok := s.builtins[command]
 		if !ok {
 			fmt.Fprintf(s.out, "%s: command not found\n", command)
+			continue
+		}
+
+		result := fnc(args)
+		if result.Exit {
+			return result.Status
 		}
 	}
 }
