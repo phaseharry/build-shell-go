@@ -1,6 +1,9 @@
 package shell
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 func (s *Shell) Run() int {
 	// for {
@@ -12,9 +15,12 @@ func (s *Shell) Run() int {
 		return 1
 	}
 
-	_, ok := s.builtins[line]
+	// removing the \n delimiter from the actual command so it doesn't mess up std output
+	command := strings.Trim(line, "\n")
+
+	_, ok := s.builtins[command]
 	if !ok {
-		fmt.Fprintf(s.out, "%s: command not found\n", line)
+		fmt.Fprintf(s.out, "%s: command not found\n", command)
 	}
 	// }
 
