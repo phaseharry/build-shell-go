@@ -29,6 +29,7 @@ func tokenize(line string) []string {
 	var tokens []string
 	var current strings.Builder
 	hasToken := false
+	singleQuoteActive := false
 
 	flush := func() {
 		// everytime flush is called, convert the current string builder to a string and reset it to build the next token.
@@ -42,7 +43,21 @@ func tokenize(line string) []string {
 	}
 
 	for _, r := range line {
-		if unicode.IsSpace(r) {
+		// single quote ' check
+		// ' is not a valid argument so it is not appended to the string builder as part of a token.
+		// it only exists to extend tokens by allowing spaces to be considered a token to be passed into commands.
+		// adding continue to both opening & closing singleQuote check to ensure they are not written
+		// to token builder
+		if r == '\'' && !singleQuoteActive { // opening single quote check
+			hasToken = true
+			singleQuoteActive = true
+			continue
+		} else if r == '\'' && singleQuoteActive { // closing single quote check
+			singleQuoteActive = false
+			continue
+		}
+		// only flush if the singleQuote is not active, else the token is still being built
+		if !singleQuoteActive && unicode.IsSpace(r) {
 			flush()
 			continue
 		}
