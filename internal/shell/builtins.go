@@ -73,22 +73,20 @@ func (s *Shell) pwd(args []string) Result {
 }
 
 func (s *Shell) cd(args []string) Result {
-	// if there is no arguments then set it to HOME directory
-	if len(args) == 0 {
-		if err := os.Chdir("~"); err != nil {
-			return Result{
-				Exit:   false,
-				Status: 1,
-			}
-		}
-		return Result{
-			Exit:   false,
-			Status: 0,
-		}
+	// defaulting to HOME directory if there are no arguments
+	target := os.Getenv("HOME")
+
+	if len(args) >= 1 {
+		target = args[0]
 	}
-	path := args[0]
-	if err := os.Chdir(path); err != nil {
-		fmt.Fprintf(s.errOut, "cd: %s: No such file or directory\n", path)
+
+	// if the arg target is "~", reset it HOME since that's a shorthand for HOME
+	if target == "~" {
+		target = os.Getenv("HOME")
+	}
+
+	if err := os.Chdir(target); err != nil {
+		fmt.Fprintf(s.errOut, "cd: %s: No such file or directory\n", target)
 		return Result{
 			Exit:   false,
 			Status: 1,
