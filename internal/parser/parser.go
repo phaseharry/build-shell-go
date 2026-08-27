@@ -83,8 +83,7 @@ func tokenize(line string) []string {
 		backslashActive = false // after treating the character after the \ as a literal, reset backslash to false
 	}
 
-	// flush one final time to capture the last token if there is one and not <space><space><space>
-	// at the end of the line
+	// flush one final time to capture the last token if there is one and not <space><space><space> at the end of the line
 	flush()
 	return tokens
 }
