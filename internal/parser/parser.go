@@ -47,8 +47,9 @@ func tokenize(line string) []string {
 	for _, r := range line {
 		// backslash check (\)
 		// need to escape it first
-		// handles the first backslash to turn the next character into a literal regardless of what it is
-		if r == '\\' && backslashActive == false {
+		// - handles the first backslash to turn the next character into a literal regardless of what it is
+		// - check if the backslash is enclosed by a singleQuote. if so, then it has no special meaning and treat it as a literal value
+		if r == '\\' && backslashActive == false && !singleQuoteActive {
 			backslashActive = true
 			continue
 		}
