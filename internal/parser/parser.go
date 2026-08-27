@@ -30,6 +30,7 @@ func tokenize(line string) []string {
 	var current strings.Builder
 	hasToken := false
 	singleQuoteActive := false
+	doubleQuoteActive := false
 
 	flush := func() {
 		// everytime flush is called, convert the current string builder to a string and reset it to build the next token.
@@ -43,21 +44,26 @@ func tokenize(line string) []string {
 	}
 
 	for _, r := range line {
-		// single quote ' check
-		// ' is not a valid argument so it is not appended to the string builder as part of a token.
-		// it only exists to extend tokens by allowing spaces to be considered a token to be passed into commands.
-		// adding continue to both opening & closing singleQuote check to ensure they are not written
-		// to token builder
-		if r == '\'' && !singleQuoteActive { // opening single quote check
+		// single quote check (')
+		// if we encounter a singleQuote before we encounter a doubleQuote, then the singleQuote will be the wrapper that
+		// has programmatic meaning while the doubleQuote is treated as a literal and gets added to the current token builder.
+		// always setting hasToken to true so we don't flush and append an empty string as a token to final tokens output
+		if r == '\'' && !doubleQuoteActive {
+			// toggle that sets to active on opening singleQuote and inactive on closing singleQuote so stringBuilder can build the token
+			// and flush it to final output
+			singleQuoteActive = !singleQuoteActive
 			hasToken = true
-			singleQuoteActive = true
-			continue
-		} else if r == '\'' && singleQuoteActive { // closing single quote check
-			singleQuoteActive = false
 			continue
 		}
-		// only flush if the singleQuote is not active, else the token is still being built
-		if !singleQuoteActive && unicode.IsSpace(r) {
+		// same as above but just for doubleQuote
+		if r == '"' && !singleQuoteActive {
+			doubleQuoteActive = !doubleQuoteActive
+			hasToken = true
+			continue
+		}
+
+		// only flush if the singleQuote and doubleQuote are not active, else the token is still being built
+		if !singleQuoteActive && !doubleQuoteActive && unicode.IsSpace(r) {
 			flush()
 			continue
 		}
