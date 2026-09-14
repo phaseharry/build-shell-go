@@ -47,10 +47,28 @@ func tokenize(line string) []string {
 	for _, r := range line {
 		// backslash check (\)
 		// need to escape it first
-		// - handles the first backslash to turn the next character into a literal regardless of what it is
+		// - handles the first backslash so the character after it can be turned into a literal
 		// - check if the backslash is enclosed by a singleQuote. if so, then it has no special meaning and treat it as a literal value
-		if r == '\\' && backslashActive == false && !singleQuoteActive {
+		if r == '\\' && !backslashActive && !singleQuoteActive {
 			backslashActive = true
+			continue
+		}
+
+		// consume the character that the backslash above was holding open for.
+		// outside of quotes a backslash escapes anything, but inside a doubleQuote it only
+		// escapes $ ` " and \. before any other character it has no special meaning, so the
+		// backslash itself has to be written back out as a literal before the character.
+		// we cannot know which case applies until we see the character, which is why the
+		// decision is made here rather than back where backslashActive was set.
+		if backslashActive {
+			backslashActive = false
+			// if the character directly after the backslash is not any of these: % ` \
+			// then the backslash is just a literal written to the current token
+			if doubleQuoteActive && !strings.ContainsRune("$`\"\\", r) {
+				current.WriteRune('\\')
+			}
+			current.WriteRune(r)
+			hasToken = true
 			continue
 		}
 
@@ -58,29 +76,29 @@ func tokenize(line string) []string {
 		// if we encounter a singleQuote before we encounter a doubleQuote, then the singleQuote will be the wrapper that
 		// has programmatic meaning while the doubleQuote is treated as a literal and gets added to the current token builder.
 		// always setting hasToken to true so we don't flush and append an empty string as a token to final tokens output
-		if r == '\'' && !doubleQuoteActive && !backslashActive {
-			// toggle that sets to active on opening singleQuote and inactive on closing singleQuote so stringBuilder can build the token
-			// and flush it to final output
+		// an escaped quote never reaches here because the backslash block above consumes it,
+		// so this can only ever see a quote that really is a delimiter
+		if r == '\'' && !doubleQuoteActive {
+			// toggle that sets to active on opening singleQuote and inactive on closing singleQuote so stringBuilder can build the token and flush it to final output
 			singleQuoteActive = !singleQuoteActive
 			hasToken = true
 			continue
 		}
 		// same as above but just for doubleQuote (")
-		if r == '"' && !singleQuoteActive && !backslashActive {
+		if r == '"' && !singleQuoteActive {
 			doubleQuoteActive = !doubleQuoteActive
 			hasToken = true
 			continue
 		}
 
-		// only flush if the singleQuote, doubleQuote, backSlash are not active, else the token is still being built
-		if !singleQuoteActive && !doubleQuoteActive && !backslashActive && unicode.IsSpace(r) {
+		// only flush if the singleQuote and doubleQuote are not active, else the token is still being built
+		if !singleQuoteActive && !doubleQuoteActive && unicode.IsSpace(r) {
 			flush()
 			continue
 		}
 
 		current.WriteRune(r)
 		hasToken = true
-		backslashActive = false // after treating the character after the \ as a literal, reset backslash to false
 	}
 
 	// flush one final time to capture the last token if there is one and not <space><space><space> at the end of the line
