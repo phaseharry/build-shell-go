@@ -33,7 +33,10 @@ func (s *Shell) execute(command parser.Command) Result {
 			std.Out = file
 		case 2:
 			std.Err = file
+		default:
+			std.Out = file
 		}
+
 	}
 
 	builtinFnc, ok := s.builtins[command.Name]
