@@ -39,7 +39,7 @@ func ParseLine(line string) Command {
 			command.Redirects = append(
 				command.Redirects,
 				Redirect{
-					FileDescriptor: 1, // hardcoding to 1 for now to always send to stdout
+					FileDescriptor: getFileDescriptor(operator),
 					Target:         targetOperand,
 					Append:         strings.HasSuffix(operator, ">>"),
 				},

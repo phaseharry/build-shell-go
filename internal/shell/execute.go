@@ -31,6 +31,8 @@ func (s *Shell) execute(command parser.Command) Result {
 		switch redirect.FileDescriptor {
 		case 1:
 			std.Out = file
+		case 2:
+			std.Err = file
 		}
 	}
 
