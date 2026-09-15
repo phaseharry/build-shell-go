@@ -32,30 +32,30 @@ func (s *Shell) execute(command parser.Command) Result {
 		case 1:
 			std.Out = file
 		}
+	}
 
-		builtinFnc, ok := s.builtins[command.Name]
-		if ok {
-			builtinFnc(command.Args, std)
-			continue
-		}
+	builtinFnc, ok := s.builtins[command.Name]
+	if ok {
+		return builtinFnc(command.Args, std)
+	}
 
-		_, err = exec.LookPath(command.Name)
-		if err != nil {
-			fmt.Fprintf(s.out, "%s: command not found\n", command.Name)
-			return Result{}
-		}
+	_, err := exec.LookPath(command.Name)
+	if err != nil {
+		fmt.Fprintf(s.out, "%s: command not found\n", command.Name)
+		return Result{}
+	}
 
-		cmd := exec.Command(command.Name, command.Args...)
-		cmd.Stdin = std.In
-		cmd.Stdout = std.Out
-		cmd.Stderr = std.Err
+	cmd := exec.Command(command.Name, command.Args...)
+	cmd.Stdin = std.In
+	cmd.Stdout = std.Out
+	cmd.Stderr = std.Err
 
-		if err := cmd.Run(); err != nil {
-			return Result{
-				Exit:   false,
-				Status: 1,
-			}
+	if err := cmd.Run(); err != nil {
+		return Result{
+			Exit:   false,
+			Status: 1,
 		}
 	}
+
 	return Result{}
 }
