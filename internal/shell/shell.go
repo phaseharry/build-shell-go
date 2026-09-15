@@ -5,7 +5,13 @@ import (
 	"io"
 )
 
-type builtin func(args []string) Result
+type Streams struct {
+	In  io.Reader
+	Out io.Writer
+	Err io.Writer
+}
+
+type builtin func(args []string, std Streams) Result
 
 type Result struct {
 	Status int

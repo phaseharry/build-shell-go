@@ -6,27 +6,52 @@ import (
 )
 
 func ParseLine(line string) Command {
+	command := Command{}
 	tokens := tokenize(line)
 
 	if len(tokens) == 0 {
-		return Command{}
+		return command
 	}
 
-	commandName := tokens[0]
-	var args []string
+	commandToken := tokens[0]
+	command.Name = commandToken.Value
 
-	if len(tokens) > 1 {
-		args = tokens[1:]
+	for i := 1; i < len(tokens); i++ {
+		token := tokens[i]
+		if token.Type == Word {
+			command.Args = append(command.Args, token.Value)
+			continue
+		}
+
+		// an operator always take the token directly after it as an argument.
+		// ex. >> output.txt
+		// if there is no token after it, then it is invalid and there is no destination to redirect an output to and should error out.
+		// just ignoring it for now
+		if i+1 > len(tokens) {
+			break
+		}
+
+		operator := token.Value
+		targetOperand := tokens[i+1].Value
+		i++
+
+		{
+			command.Redirects = append(
+				command.Redirects,
+				Redirect{
+					FileDescriptor: 1, // hardcoding to 1 for now to always send to stdout
+					Target:         targetOperand,
+					Append:         strings.HasSuffix(operator, ">>"),
+				},
+			)
+		}
 	}
 
-	return Command{
-		Name: commandName,
-		Args: args,
-	}
+	return command
 }
 
-func tokenize(line string) []string {
-	var tokens []string
+func tokenize(line string) []Token {
+	var tokens []Token
 	var current strings.Builder
 	hasToken := false
 	singleQuoteActive := false
@@ -38,13 +63,21 @@ func tokenize(line string) []string {
 		// flush is called everytime we encounter a <space> or if we are at the end of the line and we need to create the
 		// very last string
 		if hasToken {
-			tokens = append(tokens, current.String())
+			currentString := current.String()
+			token := Token{
+				Value: currentString,
+				Type:  Word,
+			}
+			tokens = append(tokens, token)
 			current.Reset()
 			hasToken = false
 		}
 	}
 
-	for _, r := range line {
+	runes := []rune(line)
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+
 		// backslash check (\)
 		// need to escape it first
 		// - handles the first backslash so the character after it can be turned into a literal
@@ -91,6 +124,38 @@ func tokenize(line string) []string {
 			continue
 		}
 
+		// redirection operator check (>)
+		// only an unquoted, unescaped > is an operator.
+		// the backslash block and both quote branches have already continued by this point, so whatever arrives here is unescaped.
+		// we just need to make sure that neither quotes are active so the > is not being treated as a literal.
+		if r == '>' && !singleQuoteActive && !doubleQuoteActive {
+			operator := ">"
+
+			// checking if the next character is > so it's the append operator >> instead
+			// of the overwrite operator >
+			if i+1 < len(runes) && runes[i+1] == '>' {
+				operator = ">>"
+				i += 1 // manually increment the index as we consume it here
+			}
+			// an unquoted run of digits touching the > is a file descriptor prefix (1>)
+			// rather than a word of its own
+			// checking if the current token includes any digits as those are valid with the > operator telling what file descriptors to redirect the output.
+			// ie. 1>, 2>, 3>, etc.
+			if hasToken && isDigits(current.String()) {
+				operator = current.String() + operator
+				current.Reset()
+				hasToken = false
+			} else {
+				// if there isn't any digits as part of current actively built token, then we need to flush it
+				// so the existing token that happens before the redirect operator gets used by the command before it.
+				// ex. echo hi>output.txt
+				// token{echo} token{hi} token{>} token{output.txt}
+				flush()
+			}
+			tokens = append(tokens, Token{Value: operator, Type: Operator})
+			continue
+		}
+
 		// only flush if the singleQuote and doubleQuote are not active, else the token is still being built
 		if !singleQuoteActive && !doubleQuoteActive && unicode.IsSpace(r) {
 			flush()
@@ -104,4 +169,16 @@ func tokenize(line string) []string {
 	// flush one final time to capture the last token if there is one and not <space><space><space> at the end of the line
 	flush()
 	return tokens
+}
+
+func isDigits(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, r := range s {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
 }

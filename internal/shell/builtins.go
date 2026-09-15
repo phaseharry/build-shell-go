@@ -17,7 +17,7 @@ func (s *Shell) builtRegistry() map[string]builtin {
 	}
 }
 
-func (s *Shell) exit(args []string) Result {
+func (s *Shell) exit(args []string, std Streams) Result {
 	// exiting the shell with status code of 0 because there was no error
 	return Result{
 		Exit:   true,
@@ -25,8 +25,8 @@ func (s *Shell) exit(args []string) Result {
 	}
 }
 
-func (s *Shell) echo(args []string) Result {
-	fmt.Fprintf(s.out, "%s\n", strings.Join(args, " "))
+func (s *Shell) echo(args []string, std Streams) Result {
+	fmt.Fprintf(std.Out, "%s\n", strings.Join(args, " "))
 	return Result{
 		Exit:   false,
 		Status: 0,
@@ -34,19 +34,19 @@ func (s *Shell) echo(args []string) Result {
 }
 
 // using typeCommand instead of type since type is a keyword
-func (s *Shell) typeCommand(args []string) Result {
+func (s *Shell) typeCommand(args []string, std Streams) Result {
 	for _, command := range args {
 		_, ok := s.builtins[command]
 		if ok {
-			fmt.Fprintf(s.out, "%s is a shell builtin\n", command)
+			fmt.Fprintf(std.Out, "%s is a shell builtin\n", command)
 			continue
 		}
 		// TODO, implement PATH lookup instead of using exec.LookPath
 		path, err := exec.LookPath(command)
 		if err != nil {
-			fmt.Fprintf(s.out, "%s: not found\n", command)
+			fmt.Fprintf(std.Err, "%s: not found\n", command)
 		} else {
-			fmt.Fprintf(s.out, "%s is %s\n", command, path)
+			fmt.Fprintf(std.Out, "%s is %s\n", command, path)
 		}
 	}
 
@@ -56,7 +56,7 @@ func (s *Shell) typeCommand(args []string) Result {
 	}
 }
 
-func (s *Shell) pwd(args []string) Result {
+func (s *Shell) pwd(args []string, std Streams) Result {
 	directory, err := os.Getwd()
 	if err != nil {
 		return Result{
@@ -64,7 +64,7 @@ func (s *Shell) pwd(args []string) Result {
 			Status: 1,
 		}
 	}
-	fmt.Fprintln(s.out, directory)
+	fmt.Fprintln(std.Out, directory)
 
 	return Result{
 		Exit:   false,
@@ -72,7 +72,7 @@ func (s *Shell) pwd(args []string) Result {
 	}
 }
 
-func (s *Shell) cd(args []string) Result {
+func (s *Shell) cd(args []string, std Streams) Result {
 	// defaulting to HOME directory if there are no arguments
 	target := os.Getenv("HOME")
 
@@ -86,7 +86,7 @@ func (s *Shell) cd(args []string) Result {
 	}
 
 	if err := os.Chdir(target); err != nil {
-		fmt.Fprintf(s.errOut, "cd: %s: No such file or directory\n", target)
+		fmt.Fprintf(std.Err, "cd: %s: No such file or directory\n", target)
 		return Result{
 			Exit:   false,
 			Status: 1,
