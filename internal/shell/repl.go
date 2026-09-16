@@ -12,7 +12,7 @@ func (s *Shell) Run() int {
 			return 1
 		}
 
-		line, err := s.reader.ReadString('\n')
+		line, err := s.reader.Readline()
 		if err != nil {
 			fmt.Fprint(s.out, err.Error())
 			return 1

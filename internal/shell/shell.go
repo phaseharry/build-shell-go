@@ -1,8 +1,9 @@
 package shell
 
 import (
-	"bufio"
 	"io"
+
+	"github.com/codecrafters-io/shell-starter-go/internal/reader"
 )
 
 type Streams struct {
@@ -22,7 +23,7 @@ type Shell struct {
 	in       io.Reader
 	out      io.Writer
 	errOut   io.Writer
-	reader   *bufio.Reader
+	reader   reader.Reader
 	builtins map[string]builtin
 }
 
@@ -31,7 +32,7 @@ func New(in io.Reader, out io.Writer, errOut io.Writer) *Shell {
 		in:     in,
 		out:    out,
 		errOut: errOut,
-		reader: bufio.NewReader(in),
+		reader: reader.New(reader.Config{Prompt: "$ "}),
 	}
 	sh.builtins = sh.builtRegistry()
 	return sh

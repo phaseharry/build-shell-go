@@ -13,17 +13,14 @@ type Redirect struct {
 
 func getFileDescriptor(operator string) int {
 	digits := strings.TrimRight(operator, ">")
-
 	// if there is no digits (> and >>) has no explicit descriptors and means stdout
 	if digits == "" {
 		return 1
 	}
-
 	// if there was an error, just use stdout
 	fileDescriptor, err := strconv.Atoi(digits)
 	if err != nil {
 		return 1
 	}
-
 	return fileDescriptor
 }
