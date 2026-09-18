@@ -10,31 +10,36 @@ import (
 var completer = readline.NewPrefixCompleter(
 	readline.PcItem("echo"),
 	readline.PcItem("exit"),
+	readline.PcItem("type"),
+	readline.PcItem("pwd"),
+	readline.PcItem("cd"),
 )
 
 // bellCompleter is a wrapper around the readline's AutoCompleter.
-// all is does is copy the same structure as the underlying Do method and pass input to the Completer and see if there's any possible completion returned.
+// all it does is copy the same structure as the underlying Do method and pass input to the Completer and see if there's any possible completion returned.
 // if so, return them to the readline instance.
-// if not, play the bell sound by writing the byte code for it
+// if not, play the bell sound by writing the byte code for it - except when there was no
+// prefix to complete in the first place, which returns early and stays silent.
 type bellCompleter struct {
 	inner readline.AutoCompleter
 	out   io.Writer
 }
 
 func (b *bellCompleter) Do(line []rune, pos int) ([][]rune, int) {
-	// the current line only contains spaces with no characters typed so there is no possible completions + we should not play the bell sound.
+	// only the text before the cursor counts as a completion prefix - the
+	// underlying completer does the same slice (complete_helper.go:113 takes
+	// line[:pos] then TrimSpaceLeft), so anything after the cursor is ignored.
 	//
-	// note: pos is where the cursor is currently at and we should only remove spaces before that as that is where the "line" is considered.
-	// anything after the cursor is not part of the auto complete anymore.
-	// ex. $     			█echo
+	// when that prefix is blank we deliberately suppress completion. note this
+	// is NOT "no matches": a blank prefix matches every builtin, so readline
+	// would drop into complete mode and print the whole menu. we return nothing
+	// instead, and stay silent rather than bell - a bell would be wrong for a
+	// case that has too many matches rather than none.
 	//
-	// where █ is the current position of the cursor.
-	// if you hit <Tab> from that position, there is no completions to be enabled because the line is starts for $ and ends at the cursor.
-	//
-	// ex. $ e█         echo
-	// if you hit <Tab> here, then you would get the recommendations of echo.
-	// to support this, we will only trim the space upto the cursor position and if there
-	// are characters there then we will check for completions.
+	// ex. "   █echo"   -> prefix "   " -> blank -> suppressed
+	//     "e█    echo" -> prefix "e"   -> matches echo AND exit -> readline
+	//                     displays both
+	//     "c█"         -> prefix "c"   -> only cd matches -> inserts "d "
 	if strings.TrimSpace(string(line[:pos])) == "" {
 		return nil, 0
 	}

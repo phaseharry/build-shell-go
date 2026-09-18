@@ -5,6 +5,11 @@ import (
 )
 
 func New(cfg Config) Reader {
+	stdout := cfg.Stdout
+	if stdout == nil {
+		stdout = readline.Stdout
+	}
+
 	readlineInstance, err := readline.NewEx(
 		&readline.Config{
 			Prompt: cfg.Prompt,
@@ -14,7 +19,7 @@ func New(cfg Config) Reader {
 			},
 			InterruptPrompt: "^C",
 			Stdin:           cfg.Stdin,
-			Stdout:          cfg.Stdout,
+			Stdout:          stdout,
 			Stderr:          cfg.Stderr,
 		})
 	if err != nil {
