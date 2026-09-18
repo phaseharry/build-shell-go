@@ -7,6 +7,7 @@ import (
 )
 
 func (s *Shell) Run() int {
+	defer s.Cleanup()
 	for {
 		if _, err := fmt.Fprint(s.out, "$ "); err != nil {
 			return 1

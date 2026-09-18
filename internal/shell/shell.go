@@ -27,12 +27,18 @@ type Shell struct {
 	builtins map[string]builtin
 }
 
-func New(in io.Reader, out io.Writer, errOut io.Writer) *Shell {
+func New(in io.ReadCloser, out io.Writer, errOut io.Writer) *Shell {
 	sh := &Shell{
 		in:     in,
 		out:    out,
 		errOut: errOut,
-		reader: reader.New(reader.Config{Prompt: "$ "}),
+		reader: reader.New(
+			reader.Config{
+				Prompt: "$ ",
+				Stdin:  in,
+				Stdout: out,
+				Stderr: errOut,
+			}),
 	}
 	sh.builtins = sh.builtRegistry()
 	return sh
